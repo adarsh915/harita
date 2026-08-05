@@ -1,0 +1,613 @@
+/* ==========================================
+   DASHBOARD LAYOUT SHELL
+   ========================================== */
+.app-container {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: 70px 1fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main";
+  height: 100vh;
+  overflow: hidden;
+  transition: grid-template-columns var(--transition-speed) var(--transition-cubic);
+}
+
+.app-container.sidebar-collapsed {
+  grid-template-columns: 75px 1fr;
+}
+
+/* ==========================================
+   SIDEBAR NAV DRAWER
+   ========================================== */
+.sidebar {
+  grid-area: sidebar;
+  background-color: var(--primary);
+  color: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--primary-dark);
+  z-index: 100;
+  width: 100%;
+  transition: all var(--transition-speed) var(--transition-cubic);
+}
+
+.sidebar-header {
+  background-color: var(--primary);
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-logo img {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary);
+  background-color: #ffffff;
+  padding: 2px;
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar-brand-name {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--secondary-light);
+  line-height: 1.2;
+}
+
+.sidebar-brand-sub {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: var(--secondary);
+  text-transform: uppercase;
+}
+
+.sidebar-menu {
+  background-color: var(--primary);
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 0.75rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sidebar-item-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  color: white !important;
+  font-weight: 500;
+  font-size: 0.92rem;
+  transition: all var(--transition-speed) var(--transition-cubic);
+}
+
+.sidebar-item-link svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  transition: transform var(--transition-speed);
+}
+
+.sidebar-item-link:hover {
+  background-color: rgba(251, 248, 242, 0.08);
+  color: var(--secondary-light);
+}
+
+.sidebar-item-link:hover svg {
+  transform: translateX(2px);
+}
+
+.sidebar-item.active .sidebar-item-link {
+  background-color: var(--secondary);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.sidebar-item.active .sidebar-item-link svg {
+  color: var(--primary-dark);
+}
+
+.sidebar-footer {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar-user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bg-card);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.sidebar-user-role {
+  font-size: 0.7rem;
+  color: var(--secondary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-logout {
+  color: var(--secondary-light);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background-color: rgba(198, 40, 40, 0.2);
+  color: var(--danger-bg);
+}
+
+/* ==========================================
+   HEADER SECTION
+   ========================================== */
+.header {
+  grid-area: header;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 90;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.menu-toggle {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--primary);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s;
+}
+
+.menu-toggle:hover {
+  background-color: var(--border-light);
+}
+
+.header-title-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-pre-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--secondary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.header-title {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Role Quick Switch Tool (Useful for UI Reviewing) */
+.role-switch-container {
+  display: flex;
+  align-items: center;
+  background-color: var(--border-light);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.role-switch-btn {
+  background: transparent;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.role-switch-btn.active {
+  background-color: var(--primary);
+  color: var(--text-white);
+}
+
+/* Header Action Icons */
+.header-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-round);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.header-icon-btn:hover {
+  background-color: var(--border-light);
+  color: var(--primary);
+}
+
+.header-icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.badge-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-round);
+  background-color: var(--danger);
+  border: 2px solid var(--bg-card);
+}
+
+/* User Profile Badge */
+.header-profile-dropdown {
+  position: relative;
+}
+
+.header-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+}
+
+.header-profile-trigger:hover {
+  background-color: var(--border-light);
+}
+
+/* ==========================================
+   MAIN CONTENT AREA
+   ========================================== */
+.main-content {
+  grid-area: main;
+  overflow-y: auto;
+  padding: 2rem;
+  background-color: var(--bg-main);
+}
+
+/* ==========================================
+   DROPDOWN OVERLAYS (Notifications & Profile)
+   ========================================== */
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 250px;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  padding: 0.5rem;
+  z-index: 150;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: all 0.2s var(--transition-cubic);
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--text-main);
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: var(--border-light);
+  color: var(--primary);
+}
+
+.dropdown-header {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.25rem;
+}
+
+.notification-dropdown {
+  width: 320px;
+}
+
+.notification-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-round);
+  background-color: var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.notification-item-content {
+  flex: 1;
+  font-size: 0.8rem;
+}
+
+.notification-item-title {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.notification-item-time {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  margin-top: 0.25rem;
+}
+
+/* ==========================================
+   RESPONSIVE LAYOUT OVERRIDES (Mobile First)
+   ========================================== */
+@media (max-width: 992px) {
+  .app-container {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "main";
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    height: 100vh;
+    width: 260px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebar.show {
+    left: 0;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .header {
+    padding: 0 1.25rem;
+  }
+
+  .main-content {
+    padding: 1.25rem;
+  }
+
+  .role-switch-container {
+    display: none;
+    /* Hide on mobile to save space */
+  }
+}
+
+/* Mobile Sidebar Backdrop overlay */
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(20, 85, 61, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 95;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-speed);
+}
+
+.sidebar-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ==========================================
+   SIDEBAR COLLAPSED STATES (DESKTOP)
+   ========================================== */
+.sidebar-collapsed .sidebar {
+  width: 75px;
+}
+
+.sidebar-collapsed .sidebar-logo .sidebar-brand-container,
+.sidebar-collapsed .sidebar-menu .sidebar-item-link span,
+.sidebar-collapsed .sidebar-user-info,
+.sidebar-collapsed .sidebar-promo-card {
+  display: none !important;
+}
+
+.sidebar-collapsed .sidebar-header {
+  padding: 0;
+  justify-content: center;
+}
+
+.sidebar-collapsed .sidebar-logo {
+  gap: 0;
+  justify-content: center;
+}
+
+.sidebar-collapsed .sidebar-logo img {
+  width: 38px;
+  height: 38px;
+  margin: 0 auto;
+}
+
+.sidebar-collapsed .sidebar-menu {
+  padding: 1.5rem 0.5rem;
+}
+
+.sidebar-collapsed .sidebar-item-link {
+  justify-content: center;
+  padding: 0.85rem;
+  gap: 0;
+}
+
+.sidebar-collapsed .sidebar-item-link svg {
+  margin: 0;
+}
+
+.sidebar-collapsed .sidebar-item-link:hover svg {
+  transform: scale(1.1);
+}
+
+.sidebar-collapsed .sidebar-user-card {
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.sidebar-collapsed .sidebar-footer {
+  background-color: var(--primary);
+  padding: 1rem 0.25rem;
+}
+
+/* ==========================================================================
+   MOBILE SCREEN NAV & SHELL OVERRIDES (<= 576px)
+   ========================================================================== */
+@media (max-width: 576px) {
+  .header {
+    padding: 0 1rem !important;
+    height: 60px !important;
+  }
+  .app-container {
+    grid-template-rows: 60px 1fr !important;
+  }
+  .header-title-container {
+    display: flex;
+    flex-direction: column;
+  }
+  .header-title {
+    font-size: 1.1rem !important;
+  }
+  .header-pre-title {
+    font-size: 0.65rem !important;
+  }
+  .header-left {
+    gap: 0.5rem !important;
+  }
+  .header-right {
+    gap: 0.65rem !important;
+  }
+  
+  /* Static footer at end of content flow saves vertical mobile space */
+  .footer {
+    position: static !important;
+    height: auto !important;
+    padding: 1rem !important;
+    text-align: center !important;
+    line-height: 1.5 !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+  
+  .main-content {
+    padding-bottom: 2rem !important; /* Reset fixed offset padding since footer flows statically */
+  }
+}
+
+/* Collapsed Sidebar Layout Improvements */
+.sidebar-collapsed .sidebar-logo img {
+  display: none !important;
+}
+
+.sidebar-collapsed .desktop-sidebar-toggle-btn {
+  margin: 0 auto !important;
+}
+
+.sidebar-collapsed .sidebar-item.active .sidebar-item-link {
+  border-left: none !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.sidebar-collapsed .sidebar-footer a,
+.sidebar-collapsed .sidebar-footer .btn-logout {
+  display: none !important;
+}
