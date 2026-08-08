@@ -1,8 +1,31 @@
-@extends('layouts.admin')
+@extends('layouts.main')
+@section('page', 'sales')
+
+@push('styles')
+<style>
+.sales-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .sales-stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .sales-stat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+</style>
+@endpush
+
 @section('content')
-
-
-      <!-- Sales Stats Grid -->
+<!-- Sales Stats Grid -->
       <div class="sales-stat-grid">
         <div class="card p-3 d-flex align-center gap-3">
           <div class="stat-icon" style="background-color: var(--success-bg); color: var(--success)">📈</div>
@@ -49,7 +72,7 @@
       <!-- Demo Leads & Inquiries Table -->
       <div class="card mb-4">
         <div class="card-header d-flex align-center justify-between">
-          <h4 class="font-semibold" style="font-family: var(--font-serif); font-size: 1.25rem;">Demo Leads & Inquiries Pipeline</h4>
+          <h4 class="font-semibold" style="font-family: var(--font-serif); font-size: 1.25rem;">Demo Leads &amp; Inquiries Pipeline</h4>
           <input type="text" id="leadsSearch" class="form-control" placeholder="Search leads..." style="width: 180px;">
         </div>
         <div class="card-body p-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
@@ -76,9 +99,6 @@
 
       <!-- Developed by Sitesoch footer -->
       <footer class="footer">
-        <p>© 2026 Harita Music Academy. All rights reserved. | Developed by <a href="https://sitesoch.com"
-            target="_blank">Sitesoch</a></p>
+        <p>© 2026 Harita Music Academy. All rights reserved. | Developed by <a href="https://sitesoch.com" target="_blank">Sitesoch</a></p>
       </footer>
-
-    
 @endsection

@@ -2461,7 +2461,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Reload page state when role is changed globally
   window.addEventListener("roleChanged", () => {
     updateUserInfoLayout();
-    applyRoleBasedVisibility();
+    // applyRoleBasedVisibility();
     
     // If a page has a custom reload callback, run it
     if (typeof onRoleChange === "function") {
@@ -2472,7 +2472,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  applyRoleBasedVisibility();
+  // applyRoleBasedVisibility();
   setupPrivacyPolicy();
 });
 
@@ -2528,7 +2528,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-referrals";
         li.innerHTML = `
-          <a href="referrals.html" class="sidebar-item-link">
+          <a href="/admin/referrals" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span>Refer & Earn</span>
           </a>
@@ -2543,7 +2543,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-feedback";
         li.innerHTML = `
-          <a href="feedback.html" class="sidebar-item-link">
+          <a href="/admin/feedbacks" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>Feedback</span>
           </a>
@@ -2559,7 +2559,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-referrals";
         li.innerHTML = `
-          <a href="referrals.html" class="sidebar-item-link">
+          <a href="/admin/referrals" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span>Referrals</span>
           </a>
@@ -2574,7 +2574,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-feedbacks";
         li.innerHTML = `
-          <a href="feedbacks.html" class="sidebar-item-link">
+          <a href="/admin/feedbacks" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>Student Feedback</span>
           </a>
@@ -2589,7 +2589,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-payroll";
         li.innerHTML = `
-          <a href="payroll.html" class="sidebar-item-link">
+          <a href="/admin/payroll" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             <span>My Payroll</span>
           </a>
@@ -2605,7 +2605,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-feedbacks";
         li.innerHTML = `
-          <a href="feedbacks.html" class="sidebar-item-link">
+          <a href="/admin/feedbacks" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>Feedbacks</span>
           </a>
@@ -2620,7 +2620,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-payroll";
         li.innerHTML = `
-          <a href="payroll.html" class="sidebar-item-link">
+          <a href="/admin/payroll" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             <span>Payroll</span>
           </a>
@@ -2635,7 +2635,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-demos";
         li.innerHTML = `
-          <a href="demos.html" class="sidebar-item-link">
+          <a href="/admin/demos" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             <span>Demo Classes</span>
           </a>
@@ -2651,7 +2651,7 @@ function setupSidebarNavigation() {
         li.className = "sidebar-item";
         li.id = "nav-referrals";
         li.innerHTML = `
-          <a href="referrals.html" class="sidebar-item-link">
+          <a href="/admin/referrals" class="sidebar-item-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span>Referral Dashboard</span>
           </a>

@@ -1,8 +1,52 @@
-@extends('layouts.teacher')
+@extends('layouts.main')
+@section('page', 'payroll')
+
+@push('styles')
+<style>
+.payroll-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .payroll-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .payroll-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .payroll-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1.8fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .payroll-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .salary-calc-box {
+      /* background-color: var(--primary-light); */
+      border: 1.5px solid var(--primary);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-top: 1rem;
+    }
+</style>
+@endpush
+
 @section('content')
-
-
-      <!-- Stats Grid -->
+<!-- Stats Grid -->
       <div class="payroll-stats">
         <div class="card p-3 d-flex align-center gap-3">
           <div class="stat-icon" style="background-color: var(--success-bg); color: var(--success)">💳</div>
@@ -49,7 +93,7 @@
               <span class="font-bold">Meera Sharma</span>
             </div>
             <div class="info-list-item">
-              <span class="text-muted">Month & Year</span>
+              <span class="text-muted">Month &amp; Year</span>
               <span class="font-semibold">July 2026</span>
             </div>
             <div class="info-list-item">
@@ -73,12 +117,10 @@
                 = <code>(500 * 10) + (100 * 5)</code> = <b class="text-serif font-bold">₹5,500</b>
               </div>
 
-              <div
-                style="font-size:0.8rem; line-height: 1.45; border-top: 1px solid var(--primary); padding-top: 0.5rem; margin-top: 0.5rem;">
+              <div style="font-size:0.8rem; line-height: 1.45; border-top: 1px solid var(--primary); padding-top: 0.5rem; margin-top: 0.5rem;">
                 <span class="text-muted font-medium">This Month Actual Payout:</span><br>
                 <code>(Rate * 24) + (20% of Rate * 5)</code><br>
-                = <code>(500 * 24) + (100 * 5)</code> = <b class="text-serif font-bold"
-                  style="font-size:1.1rem; color: var(--secondary);">₹12,500</b>
+                = <code>(500 * 24) + (100 * 5)</code> = <b class="text-serif font-bold" style="font-size:1.1rem; color: var(--secondary);">₹12,500</b>
               </div>
             </div>
           </div>
@@ -108,5 +150,4 @@
         </div>
 
       </div>
-    
 @endsection
