@@ -61,9 +61,10 @@ Route::middleware(['auth', 'role.access:admin'])
         Route::post('/leaves/{teacherLeave}/reject',            [LeaveController::class, 'reject'])->name('leaves.reject');
 
         // Payroll
-        // Payroll
         Route::get('/payroll', [AdminController::class, 'payroll'])->name('payroll');
-
+        Route::post('/payroll/disburse-all', [AdminController::class, 'disburseAllPayroll'])->name('payroll.disburse-all');
+        Route::put('/payroll/{payroll}/rate', [AdminController::class, 'updatePayrollRate'])->name('payroll.rate.update');
+        Route::post('/payroll/{payroll}/disburse', [AdminController::class, 'disbursePayroll'])->name('payroll.disburse');
         // Referrals
         Route::get('/referrals',               [AdminController::class, 'referrals'])->name('referrals');
         Route::put('/referrals/{referral}',    [AdminController::class, 'updateReferral'])->name('referrals.update');

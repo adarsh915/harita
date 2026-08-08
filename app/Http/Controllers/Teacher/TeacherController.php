@@ -65,9 +65,64 @@ class TeacherController extends Controller
 
     public function payroll(): View
     {
-        $teacher = auth()->user()->teacher;
+        $teacher = $this->teacher();
+        $currentMonthName = now()->format('F Y');
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+        
+        $currentPayroll = TeacherPayroll::firstOrNew([
+            'teacher_id' => $teacher->id,
+            'month' => $currentMonthName,
+        ]);
+
+        if (!$currentPayroll->exists || $currentPayroll->status === 'pending') {
+            $classesTaken = \App\Models\ClassBooking::where('teacher_id', $teacher->id)
+                ->where('status', 'completed')
+                ->whereBetween('starts_at', [$startOfMonth, $endOfMonth])
+                ->count();
+
+            $demoOpportunities = \App\Models\DemoBooking::where('teacher_id', $teacher->id)
+                ->where('status', 'completed')
+                ->whereBetween('scheduled_at', [$startOfMonth, $endOfMonth])
+                ->count();
+
+            $referralOpportunities = \App\Models\Referral::where('referrer_id', $teacher->user_id)
+                ->where('referrer_role', 'teacher')
+                ->where('status', 'approved')
+                ->whereBetween('updated_at', [$startOfMonth, $endOfMonth])
+                ->count() * 5;
+
+            $opportunityTaken = $demoOpportunities + $referralOpportunities;
+
+            if (!$currentPayroll->exists || $currentPayroll->per_class_rate == 0) {
+                $currentPayroll->per_class_rate = 500; 
+            }
+
+            $rate = $currentPayroll->per_class_rate;
+            $currentPayroll->classes_taken = $classesTaken;
+            $currentPayroll->opportunity_taken = $opportunityTaken;
+            $currentPayroll->formula_salary = ($rate * 10) + (0.20 * $rate * 5);
+            $currentPayroll->calculated_salary = ($rate * $classesTaken) + (0.20 * $rate * $opportunityTaken);
+            
+            if (!$currentPayroll->exists) {
+                $currentPayroll->status = 'pending';
+            }
+            $currentPayroll->save();
+        }
+
         $payrolls = TeacherPayroll::where('teacher_id', $teacher->id)->latest('month')->get();
-        return view('teacher.payroll', compact('payrolls'));
+        
+        // Get completed classes for current month
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+        $recentClasses = \App\Models\ClassBooking::with('student.user')
+                            ->where('teacher_id', $teacher->id)
+                            ->where('status', 'completed')
+                            ->whereBetween('starts_at', [$startOfMonth, $endOfMonth])
+                            ->orderBy('starts_at', 'desc')
+                            ->get();
+
+        return view('teacher.payroll', compact('payrolls', 'currentPayroll', 'currentMonthName', 'recentClasses', 'teacher'));
     }
 
     public function feedbacks(): View
@@ -87,7 +142,7 @@ class TeacherController extends Controller
     {
         $data = $request->validate([
             'referred_name'  => ['required', 'string'],
-            'referred_phone' => ['required', 'string'],
+            'referred_email' => ['required', 'email'],
             'interest_role'  => ['required', 'string'],
         ]);
 

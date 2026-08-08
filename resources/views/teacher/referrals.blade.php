@@ -63,8 +63,8 @@
                   <input type="text" name="referred_name" class="form-control" placeholder="Enter full name" required>
                 </div>
                 <div class="form-group mb-3">
-                  <label class="form-label font-semibold">Mobile Number</label>
-                  <input type="text" name="referred_phone" class="form-control" placeholder="eg. +91 7788676399" required>
+                  <label class="form-label font-semibold">Email Address</label>
+                  <input type="email" name="referred_email" class="form-control" placeholder="eg. jane@example.com" required>
                 </div>
                 <div class="form-group mb-3">
                   <label class="form-label font-semibold">Referred Person Category</label>

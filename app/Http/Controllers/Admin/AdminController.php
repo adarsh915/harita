@@ -492,12 +492,92 @@ class AdminController extends Controller
     public function payroll(): View
     {
         $currentMonth = now()->format('F Y');
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        // Auto-generate/update pending payrolls on page load for the current month
+        $teachers = Teacher::where('status', 'Active')->get();
+        foreach ($teachers as $teacher) {
+            $payroll = TeacherPayroll::firstOrNew([
+                'teacher_id' => $teacher->id,
+                'month' => $currentMonth,
+            ]);
+
+            // Only auto-update if it's pending (not yet paid)
+            if (!$payroll->exists || $payroll->status === 'pending') {
+                $classesTaken = ClassBooking::where('teacher_id', $teacher->id)
+                    ->where('status', 'completed')
+                    ->whereBetween('starts_at', [$startOfMonth, $endOfMonth])
+                    ->count();
+
+                $demoOpportunities = DemoBooking::where('teacher_id', $teacher->id)
+                    ->where('status', 'completed')
+                    ->whereBetween('scheduled_at', [$startOfMonth, $endOfMonth])
+                    ->count();
+
+                // 1 Approved Referral = Rs 500 bonus = 5 opportunities
+                $referralOpportunities = \App\Models\Referral::where('referrer_id', $teacher->user_id)
+                    ->where('referrer_role', 'teacher')
+                    ->where('status', 'approved')
+                    ->whereBetween('updated_at', [$startOfMonth, $endOfMonth])
+                    ->count() * 5;
+
+                $opportunityTaken = $demoOpportunities + $referralOpportunities;
+
+                if (!$payroll->exists || $payroll->per_class_rate == 0) {
+                    $payroll->per_class_rate = 500; 
+                }
+
+                $rate = $payroll->per_class_rate;
+                $payroll->classes_taken = $classesTaken;
+                $payroll->opportunity_taken = $opportunityTaken;
+                $payroll->formula_salary = ($rate * 10) + (0.20 * $rate * 5);
+                $payroll->calculated_salary = ($rate * $classesTaken) + (0.20 * $rate * $opportunityTaken);
+                
+                if (!$payroll->exists) {
+                    $payroll->status = 'pending';
+                }
+                $payroll->save();
+            }
+        }
+
         $payrolls     = TeacherPayroll::with('teacher')->where('month', $currentMonth)->get();
         $totalPayout  = $payrolls->sum('calculated_salary');
         $totalTeachers = $payrolls->count();
         $totalOpportunity = $payrolls->sum('opportunity_taken');
 
         return view('admin.payroll.index', compact('payrolls', 'totalPayout', 'totalTeachers', 'totalOpportunity', 'currentMonth'));
+    }
+
+    public function updatePayrollRate(Request $request, TeacherPayroll $payroll): RedirectResponse
+    {
+        $request->validate([
+            'per_class_rate' => ['required', 'numeric', 'min:1']
+        ]);
+
+        $rate = $request->per_class_rate;
+        $payroll->per_class_rate = $rate;
+        $payroll->formula_salary = ($rate * 10) + (0.20 * $rate * 5);
+        $payroll->calculated_salary = ($rate * $payroll->classes_taken) + (0.20 * $rate * $payroll->opportunity_taken);
+        $payroll->save();
+
+        return back()->with('success', 'Class rate updated and salary recalculated!');
+    }
+
+    public function disbursePayroll(TeacherPayroll $payroll): RedirectResponse
+    {
+        $payroll->update(['status' => 'paid']);
+        return back()->with('success', 'Payroll disbursed successfully!');
+    }
+
+    public function disburseAllPayroll(): RedirectResponse
+    {
+        $currentMonth = now()->format('F Y');
+        TeacherPayroll::where('month', $currentMonth)
+            ->where('status', 'pending')
+            ->update(['status' => 'paid']);
+
+        return back()->with('success', 'All pending payrolls for ' . $currentMonth . ' disbursed successfully!');
     }
 
     // ─── Referrals ────────────────────────────────────────────────────────────

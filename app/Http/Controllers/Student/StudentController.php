@@ -205,7 +205,8 @@ class StudentController extends Controller
     {
         $student = $this->student();
         $user    = auth()->user();
-        return view('student.profile', compact('student', 'user'));
+        $payments = $student ? \App\Models\Payment::where('converted_student_id', $student->id)->orderBy('transaction_date', 'desc')->get() : collect();
+        return view('student.profile', compact('student', 'user', 'payments'));
     }
 
     public function settings(): View
