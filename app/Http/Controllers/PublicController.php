@@ -20,16 +20,16 @@ class PublicController extends Controller
 
         $startsAt = Carbon::parse($validated['scheduled_at']);
 
-        // Since Razorpay is not implemented yet, we simulate a successful payment
-        // and create the demo booking.
-        $demoBooking = DemoBooking::create([
+        // Create a lead in the Sales Dashboard (Payment table)
+        // Format: email|phone so admin can use it when booking demo or converting
+        \App\Models\Payment::create([
             'student_name' => $validated['student_name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'contact' => $validated['email'] . '|' . $validated['phone'], // Format: email|phone
             'instrument' => $validated['instrument'],
-            'scheduled_at' => $startsAt,
-            'duration_minutes' => 40,
-            'status' => 'scheduled',
+            'amount' => 499.00,
+            'payment_mode' => 'Online',
+            'transaction_date' => today(),
+            'status' => 'pending', // Changed from 'confirmed' to 'pending' so it shows as "Inquiry"
         ]);
 
         return back()->with('demo_success', true);

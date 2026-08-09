@@ -135,4 +135,58 @@
         </div>
     </div>
 </div>
+
+@if($demos->count() > 0)
+<div class="card slide-up mb-4 mt-4">
+    <div class="card-body">
+        <h4 class="font-semibold text-warning mb-3">Demo Classes</h4>
+        
+        <div id="demoList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+            @foreach($demos as $demo)
+                @php
+                    $customClass = "";
+                    $badgeClass = "badge-primary";
+                    $statusLabel = ucfirst($demo->status);
+
+                    if ($demo->status === "completed" || $demo->status === "converted") {
+                        $customClass = "completed";
+                        $badgeClass = "badge-success";
+                    } elseif ($demo->status === "cancelled" || $demo->status === "no-show") {
+                        $customClass = "cancelled";
+                        $badgeClass = "badge-danger";
+                    }
+                @endphp
+                <div class="agenda-item {{ $customClass }}" style="border-left-color: var(--warning);">
+                    <div class="d-flex align-center gap-3">
+                        <div class="agenda-date-badge">
+                            <div class="font-bold text-primary" style="font-size: 1.2rem;">{{ $demo->scheduled_at->format('d') }}</div>
+                            <div class="text-muted font-bold" style="font-size: 0.7rem;">{{ strtoupper($demo->scheduled_at->format('M')) }}</div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-primary">{{ $demo->student_name }} (Demo)</h4>
+                            <div class="text-muted" style="font-size: 0.8rem;">
+                                <strong>{{ $demo->scheduled_at->format('h:i A') }}</strong> ({{ $demo->duration_minutes }} mins)<br>
+                                {{ $demo->instrument }}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        @if($demo->status === 'scheduled')
+                            <div class="d-flex gap-2">
+                                <a href="{{ $demo->google_meet_link ?? 'https://meet.google.com' }}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none;">Start Demo</a>
+                            </div>
+                        @else
+                            <span class="badge {{ $badgeClass }}">{{ $statusLabel }}</span>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        
+        <div class="mt-4">
+            {{ $demos->links() }}
+        </div>
+    </div>
+</div>
+@endif
 @endsection

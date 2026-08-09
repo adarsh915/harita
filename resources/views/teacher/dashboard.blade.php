@@ -267,6 +267,31 @@
             </div>
           </div>
         </div>
+
+        @if(isset($todayDemos) && $todayDemos->count() > 0)
+        <div class="grid grid-12 gap-4 mb-4">
+          <div class="card p-3" style="border-left: 4px solid var(--warning);">
+            <h4 class="font-semibold text-warning mb-3">Today's Demo Classes</h4>
+            <div class="schedule-grid-cols">
+              @foreach($todayDemos as $demo)
+              <div class="student-class-box" style="border-left-color: var(--warning);">
+                  <div class="d-flex justify-between align-center mb-2">
+                    <span class="badge badge-primary">{{ $demo->scheduled_at->format('h:i A') }}</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">{{ $demo->duration_minutes }} mins</span>
+                  </div>
+                  <div>
+                    <h5 class="font-bold text-main" style="margin-bottom: 0.25rem;">{{ $demo->student_name }}</h5>
+                    <p class="text-muted" style="font-size: 0.85rem;">{{ $demo->instrument }} (Demo)</p>
+                  </div>
+                  <div class="d-flex gap-2 mt-2">
+                    <a href="{{ $demo->google_meet_link ?? 'https://meet.google.com' }}" target="_blank" class="btn btn-primary btn-sm" style="flex:1; text-align:center; text-decoration:none;">Start Demo</a>
+                  </div>
+              </div>
+              @endforeach
+            </div>
+          </div>
+        </div>
+        @endif
       </div>
 
       <footer class="footer">

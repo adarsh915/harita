@@ -225,14 +225,20 @@
         <div class="card-header">
           <h4 class="font-semibold" id="bookingPanelTitle">Schedule a New Class Room</h4>
         </div>
-        <form id="bookingForm" onsubmit="bookNewClass(event)" class="card-body">
+        <form id="bookingForm" method="POST" action="{{ route('admin.bookings.store') }}" class="card-body" onsubmit="prepareBookingSubmit(event)">
+          @csrf
+          <input type="hidden" name="teacher_id" id="hiddenTeacherId">
+          <input type="hidden" name="instrument" id="hiddenInstrument">
+          <input type="hidden" name="starts_at" id="hiddenStartsAt">
+          <input type="hidden" name="ends_at" id="hiddenEndsAt">
+          <input type="hidden" name="type" id="hiddenType">
           <div class="booking-container">
             <!-- Left Side: Inputs -->
             <div class="booking-form-section">
               <div class="booking-grid">
                 <div class="form-group">
                   <label class="form-label" for="bookStudent">Student Name</label>
-                  <select id="bookStudent" class="form-control" required onchange="onStudentSelectChange()">
+                  <select name="student_id" id="bookStudent" class="form-control" required onchange="onStudentSelectChange()">
                     <!-- Loaded dynamically -->
                   </select>
                 </div>
@@ -387,6 +393,32 @@
 
 @push('scripts')
 <script>
+    const serverStudents = @json($students->map(function($s) {
+        return [
+            'id' => (string) $s->id,
+            'name' => $s->name,
+            'teacher' => $s->teacher->name ?? 'N/A',
+            'teacher_id' => $s->teacher_id ?? '',
+            'instrument' => $s->course->name ?? 'N/A',
+            'credits' => $s->credits ?? 0,
+            'status' => 'Active'
+        ];
+    })->values());
+
+    const serverBookings = @json($activeBookings->map(function($b) {
+        return [
+            'id' => (string) $b->id,
+            'instrument' => $b->instrument,
+            'dateTime' => \Carbon\Carbon::parse($b->starts_at)->format('Y-m-d\TH:i:s'),
+            'duration' => $b->duration_minutes . ' mins',
+            'studentName' => $b->student->name ?? 'N/A',
+            'teacherName' => $b->teacher->name ?? 'N/A',
+            'meetLink' => $b->meet_link,
+            'status' => ucfirst($b->status),
+            'recurrence' => $b->type === 'recurring' ? 'Recurring' : null,
+        ];
+    })->values());
+
 let dtActiveClasses = null;
     const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -418,7 +450,7 @@ let dtActiveClasses = null;
     }
 
     function populateStudentSelect() {
-      const students = db.getStudents();
+      const students = serverStudents;
       const role = db.getCurrentRole();
       const select = document.getElementById("bookStudent");
       if (!select) return;
@@ -438,7 +470,7 @@ let dtActiveClasses = null;
       const select = document.getElementById("bookStudent");
       if (!select) return;
       const studentId = select.value;
-      const students = db.getStudents();
+      const students = serverStudents;
       const student = students.find(s => s.id === studentId);
 
       const statusTeacher = document.getElementById("statusTeacher");
@@ -621,7 +653,7 @@ let dtActiveClasses = null;
 
       if (!bookStudent || !bookStudent.value) return;
 
-      const students = db.getStudents();
+      const students = serverStudents;
       const student = students.find(s => s.id === bookStudent.value);
       if (!student) return;
 
@@ -695,7 +727,7 @@ let dtActiveClasses = null;
     }
 
     function loadActiveClasses() {
-      const classes = db.getClasses();
+      const classes = serverBookings;
       const role = db.getCurrentRole();
       const container = document.getElementById("rescheduleTableBody");
       if (!container) return;
@@ -707,6 +739,7 @@ let dtActiveClasses = null;
 
       const activeClasses = classes.filter(cls => {
         if (cls.status !== "Scheduled" && cls.status !== "Reschedule Requested") return false;
+        // In real backend, these are already filtered if needed, but we do client-side filter just in case based on role
         if (role === 'teacher' && cls.teacherName !== "Meera Sharma") return false;
         if (role === 'student' && cls.studentName !== "Ananya Iyer") return false;
         return true;
@@ -715,23 +748,6 @@ let dtActiveClasses = null;
       const partyHeader = document.getElementById("partyHeader");
       if (partyHeader) {
         partyHeader.textContent = role === 'student' ? 'Teacher' : 'Student';
-      }
-
-      // Auto-heal meet link if missing for active scheduled classes
-      let dbUpdated = false;
-      const allClassList = db.getClasses();
-
-      activeClasses.forEach(cls => {
-        const matched = allClassList.find(c => c.id === cls.id);
-        if (matched && !matched.meetLink) {
-          matched.meetLink = generateMeetLink();
-          cls.meetLink = matched.meetLink;
-          dbUpdated = true;
-        }
-      });
-
-      if (dbUpdated) {
-        db.setClasses(allClassList);
       }
 
       activeClasses.forEach(cls => {
@@ -767,9 +783,7 @@ let dtActiveClasses = null;
       applyRoleBookingVisibility();
     }
 
-    function bookNewClass(e) {
-      e.preventDefault();
-
+    function prepareBookingSubmit(e) {
       const studentId = document.getElementById("bookStudent").value;
       const bookDate = document.getElementById("bookDate").value;
       const bookTime = document.getElementById("bookTime").value;
@@ -777,83 +791,52 @@ let dtActiveClasses = null;
       const bookWeeksVal = document.getElementById("bookWeeks").value;
 
       if (!studentId || !bookDate || !bookTime) {
+        e.preventDefault();
         alert("Please fill in all required fields.");
         return;
       }
 
-      const students = db.getStudents();
-      const studentIdx = students.findIndex(s => s.id === studentId);
-      if (studentIdx === -1) return;
-      const student = students[studentIdx];
+      const student = serverStudents.find(s => s.id === studentId);
+      if (!student) {
+        e.preventDefault();
+        return;
+      }
 
       const isRecurring = recurrenceMode === "recurring";
       const weeksCount = isRecurring ? (parseInt(bookWeeksVal, 10) || 1) : 1;
 
       if (student.credits < weeksCount) {
+        e.preventDefault();
         alert(`Insufficient credits! This booking requires ${weeksCount} credit(s), but student only has ${student.credits} remaining.`);
         return;
       }
 
-      const classes = db.getClasses();
-
-      // Parse date and time
+      document.getElementById("hiddenTeacherId").value = student.teacher_id;
+      document.getElementById("hiddenInstrument").value = student.instrument;
+      
       const [year, month, day] = bookDate.split('-').map(num => parseInt(num, 10));
       const [hStr, mStr] = bookTime.split(':');
       const h = parseInt(hStr, 10);
       const m = parseInt(mStr, 10);
+      
+      const startsAt = new Date(year, month - 1, day, h, m);
+      const endsAt = new Date(startsAt.getTime() + 40 * 60000); 
 
-      const baseMeetLink = generateMeetLink();
+      const formatYmdHis = (d) => {
+        return d.getFullYear() + '-' + 
+          String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+          String(d.getDate()).padStart(2, '0') + ' ' + 
+          String(d.getHours()).padStart(2, '0') + ':' + 
+          String(d.getMinutes()).padStart(2, '0') + ':00';
+      };
 
-      for (let i = 0; i < weeksCount; i++) {
-        const newId = "CLS" + String(classes.length + 1).padStart(3, '0');
-        const occurrenceDate = new Date(year, month - 1, day, h, m);
-        occurrenceDate.setDate(occurrenceDate.getDate() + (i * 7));
-
-        const y = occurrenceDate.getFullYear();
-        const mo = String(occurrenceDate.getMonth() + 1).padStart(2, '0');
-        const d = String(occurrenceDate.getDate()).padStart(2, '0');
-        const hh = String(occurrenceDate.getHours()).padStart(2, '0');
-        const mm = String(occurrenceDate.getMinutes()).padStart(2, '0');
-
-        const dateTimeStr = `${y}-${mo}-${d}T${hh}:${mm}`;
-
-        const newClassObj = {
-          id: newId,
-          studentName: student.name,
-          teacherName: student.teacher,
-          instrument: student.instrument,
-          dateTime: dateTimeStr,
-          duration: "40 mins",
-          status: "Scheduled",
-          meetLink: baseMeetLink,
-          recurrence: isRecurring ? `Recurring (${i + 1} of ${weeksCount})` : "One-time"
-        };
-
-        classes.push(newClassObj);
-      }
-
-      students[studentIdx].credits = Math.max(0, student.credits - weeksCount);
-
-      db.setStudents(students);
-      db.setClasses(classes);
-
-      if (isRecurring) {
-        alert(`Success! Scheduled ${weeksCount} recurring weekly classes for ${student.name}. Deducted ${weeksCount} credits.`);
-      } else {
-        alert(`Success! Scheduled class for ${student.name}. Deducted 1 credit.`);
-      }
-
-      document.getElementById("bookingForm").reset();
-      setRecurrenceMode('one-time');
-      document.getElementById("studentStatusCard").style.display = "none";
-      document.getElementById("recurrenceSection").style.display = "none";
-
-      populateStudentSelect();
-      loadActiveClasses();
+      document.getElementById("hiddenStartsAt").value = formatYmdHis(startsAt);
+      document.getElementById("hiddenEndsAt").value = formatYmdHis(endsAt);
+      document.getElementById("hiddenType").value = isRecurring ? 'recurring' : 'one-time';
     }
 
     function openRescheduleModal(classId) {
-      const classes = db.getClasses();
+      const classes = serverBookings;
       const cls = classes.find(c => c.id === classId);
       if (!cls) return;
 
@@ -891,7 +874,7 @@ let dtActiveClasses = null;
       const newProposedDate = document.getElementById("reschNewDate").value;
       const newProposedTime = document.getElementById("reschNewTime").value;
 
-      const classes = db.getClasses();
+      const classes = serverBookings;
       const idx = classes.findIndex(c => c.id === classId);
       if (idx === -1) return;
 
@@ -901,7 +884,7 @@ let dtActiveClasses = null;
       classes[idx].tempDateTime = combinedDateTime;
       classes[idx].rescheduledBy = db.getCurrentRole();
 
-      db.setClasses(classes);
+      // db.setClasses(classes);
       hideModal("rescheduleModal");
       loadActiveClasses();
       alert("Reschedule request submitted successfully! Awaiting review.");

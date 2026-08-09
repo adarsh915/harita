@@ -24,21 +24,31 @@ class TeacherController extends Controller
     public function dashboard(): View
     {
         $teacher      = $this->teacher();
-        $todayClasses = $teacher
-            ? ClassBooking::where('teacher_id', $teacher->id)
+        $todayClasses = collect();
+        $todayDemos   = collect();
+
+        if ($teacher) {
+            $todayClasses = ClassBooking::where('teacher_id', $teacher->id)
                 ->whereDate('starts_at', today())
                 ->where('status', 'scheduled')
                 ->with('student')
-                ->get()
-            : collect();
-        return view('teacher.dashboard', compact('teacher', 'todayClasses'));
+                ->get();
+            
+            $todayDemos = \App\Models\DemoBooking::where('teacher_id', $teacher->id)
+                ->whereDate('scheduled_at', today())
+                ->where('status', 'scheduled')
+                ->get();
+        }
+
+        return view('teacher.dashboard', compact('teacher', 'todayClasses', 'todayDemos'));
     }
 
     public function myClasses(): View
     {
         $teacher = auth()->user()->teacher;
         $classes = ClassBooking::where('teacher_id', $teacher->id)->with('student')->latest('starts_at')->paginate(15);
-        return view('teacher.my-classes', compact('classes'));
+        $demos = \App\Models\DemoBooking::where('teacher_id', $teacher->id)->latest('scheduled_at')->paginate(15);
+        return view('teacher.my-classes', compact('classes', 'demos'));
     }
 
     public function leaves(): View

@@ -23,4 +23,9 @@ class DemoBooking extends Model
     {
         return $this->belongsTo(Student::class, 'converted_student_id');
     }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
+    }
 }

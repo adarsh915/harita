@@ -49,6 +49,29 @@
 @endpush
 
 @section('content')
+
+@if(session('success'))
+    <div class="alert alert-success" style="background-color: #d1fae5; color: #065f46; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger" style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+        {{ session('error') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="alert alert-danger" style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+        <ul style="margin: 0; padding-left: 1.5rem;">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <!-- KPI Stats -->
       <div class="stat-card-grid">
         <div class="card stat-card p-3 d-flex align-center gap-3">
@@ -85,7 +108,6 @@
       <div class="card">
         <div class="card-header d-flex align-center justify-between flex-wrap gap-2">
           <h4 class="font-semibold" style="font-family: var(--font-serif); font-size: 1.25rem;">Demo Session Ledger</h4>
-          <button class="btn btn-primary" onclick="openAddDemoModal()">+ Add Demo</button>
         </div>
         <div class="card-body p-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
           <table class="table display responsive nowrap" id="demosTable" style="width:100%">
@@ -110,33 +132,28 @@
                   <td>{{ $demo->scheduled_at->format('M d, Y h:i A') }}</td>
                   <td>{{ $demo->duration_minutes }} mins</td>
                   <td>
-                    @if($demo->status === 'converted')
-                        <span class="badge badge-success" style="background-color: #fef3c7; color: #b45309; border: 1px solid #f59e0b;">Converted</span>
-                        <div style="font-size:10px; margin-top:2px;">(Student: {{ $demo->convertedStudent->user->name ?? 'N/A' }})</div>
-                    @else
-                        <form action="{{ route('admin.demos.status', $demo) }}" method="POST" style="display: inline;">
-                            @csrf
-                            @method('PUT')
-                            <select name="status" class="form-control badge-select" onchange="handleStatusChange(this, {{ $demo->id }})" style="
-                                @if($demo->status == 'scheduled') background-color: #eff6ff; color: #1e40af; border: 1px solid #3b82f6;
-                                @elseif($demo->status == 'completed') background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success);
-                                @elseif($demo->status == 'cancelled') background-color: #f3f4f6; color: #374151; border: 1px solid #9ca3af;
-                                @elseif($demo->status == 'no-show') background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444;
-                                @endif
-                            ">
-                                <option value="scheduled" {{ $demo->status == 'scheduled' ? 'selected' : '' }}>Scheduled</option>
-                                <option value="completed" {{ $demo->status == 'completed' ? 'selected' : '' }}>Completed</option>
-                                <option value="cancelled" {{ $demo->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                                <option value="no-show" {{ $demo->status == 'no-show' ? 'selected' : '' }}>No Show</option>
-                                <option value="convert_trigger" style="color: #b45309; font-weight: bold;"
-                                    data-name="{{ $demo->student_name }}"
-                                    data-email="{{ $demo->email }}"
-                                    data-phone="{{ $demo->phone }}"
-                                    data-instrument="{{ $demo->instrument }}"
-                                    data-teacher-id="{{ $demo->teacher_id }}"
-                                >➡️ Convert to Student</option>
-                            </select>
-                        </form>
+                    <form action="{{ route('admin.demos.status', $demo) }}" method="POST" style="display: inline;">
+                        @csrf
+                        @method('PUT')
+                        <select name="status" class="form-control badge-select" onchange="this.form.submit()" style="
+                            @if($demo->status == 'scheduled') background-color: #eff6ff; color: #1e40af; border: 1px solid #3b82f6;
+                            @elseif($demo->status == 'completed') background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success);
+                            @elseif($demo->status == 'converted') background-color: #fef3c7; color: #b45309; border: 1px solid #f59e0b;
+                            @elseif($demo->status == 'cancelled') background-color: #f3f4f6; color: #374151; border: 1px solid #9ca3af;
+                            @elseif($demo->status == 'no-show') background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444;
+                            @endif
+                        ">
+                            <option value="scheduled" {{ $demo->status == 'scheduled' ? 'selected' : '' }}>Scheduled</option>
+                            <option value="completed" {{ $demo->status == 'completed' ? 'selected' : '' }}>Completed</option>
+                            <option value="converted" {{ $demo->status == 'converted' ? 'selected' : '' }}>Converted</option>
+                            <option value="cancelled" {{ $demo->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                            <option value="no-show" {{ $demo->status == 'no-show' ? 'selected' : '' }}>No Show</option>
+                        </select>
+                    </form>
+                    @if($demo->status === 'converted' && $demo->convertedStudent)
+                        <div style="font-size:10px; margin-top:4px; color: #b45309;">
+                            Student: {{ $demo->convertedStudent->name ?? 'N/A' }}
+                        </div>
                     @endif
                   </td>
               </tr>
@@ -145,146 +162,6 @@
           </table>
         </div>
       </div>
-
-  <!-- ADD DEMO MODAL -->
-  <div id="addDemoModal" class="modal-backdrop">
-    <div class="modal" style="max-width: 500px;">
-      <div class="modal-header">
-        <h3 class="font-semibold text-serif">Schedule Demo Class</h3>
-        <button class="modal-close" onclick="closeAddDemoModal()">×</button>
-      </div>
-      <form action="{{ route('admin.demos.store') }}" method="POST">
-        @csrf
-        <div class="modal-body">
-            <div class="form-group mb-3">
-              <label class="form-label">Student Name</label>
-              <input type="text" name="student_name" class="form-control" required>
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Instrument / Class Type</label>
-              <input type="text" name="instrument" class="form-control" placeholder="e.g. Carnatic Vocal, Sitar" required>
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Assign Teacher</label>
-              <select name="teacher_id" class="form-control" required>
-                  <option value="">Select a Teacher</option>
-                  @foreach($teachers as $teacher)
-                      <option value="{{ $teacher->id }}">{{ $teacher->user->name }} ({{ implode(', ', $teacher->instruments ?? []) }})</option>
-                  @endforeach
-              </select>
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Scheduled Date & Time</label>
-              <input type="datetime-local" name="scheduled_at" class="form-control" required>
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Duration (Minutes)</label>
-              <input type="number" name="duration_minutes" class="form-control" value="40" required>
-            </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="closeAddDemoModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary">Schedule Demo</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-
-  <!-- CONVERT TO STUDENT MODAL -->
-  <div id="convertToStudentModal" class="modal-backdrop">
-    <div class="modal" style="max-width: 800px;">
-      <div class="modal-header">
-        <h3 class="font-semibold text-serif">Convert Lead to Student</h3>
-        <button class="modal-close" type="button" onclick="closeConvertModal()">×</button>
-      </div>
-      <form id="convertForm" method="POST">
-        @csrf
-        <div class="modal-body">
-          <div class="grid grid-2 gap-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="convertCode">Student ID Code</label>
-              <input type="text" id="convertCode" name="student_code" class="form-control" placeholder="e.g. HMAST000051" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="convertName">Full Name</label>
-              <input type="text" id="convertName" name="name" class="form-control" required>
-            </div>
-          </div>
-
-          <div class="grid grid-2 gap-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="convertEmail">Email Address</label>
-              <input type="email" id="convertEmail" name="email" class="form-control" required placeholder="e.g. rajesh@example.com">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="convertPhone">Phone Number</label>
-              <input type="text" id="convertPhone" name="phone" class="form-control" required placeholder="e.g. +91 98234 56789">
-            </div>
-          </div>
-
-          <div class="grid grid-2 gap-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="convertLevel">Initial Level</label>
-              <select id="convertLevel" name="enrolled_level" class="form-control" required>
-                <option value="Foundation Level">Foundation Level</option>
-                <option value="Intermediate Level">Intermediate Level</option>
-                <option value="Advanced Level">Advanced Level</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="convertInstrument">Instrument Category</label>
-              <input type="text" id="convertInstrument" name="instrument" class="form-control" required>
-            </div>
-          </div>
-
-          <div class="grid grid-2 gap-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="convertTeacher">Assigned Teacher</label>
-              <select id="convertTeacher" name="teacher_id" class="form-control" required>
-                  <option value="">Select a Teacher</option>
-                  @foreach($teachers as $teacher)
-                      <option value="{{ $teacher->id }}">{{ $teacher->user->name }} ({{ implode(', ', $teacher->instruments ?? []) }})</option>
-                  @endforeach
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="convertPackage">Selected Package</label>
-              <select id="convertPackage" name="package" class="form-control" onchange="updatePackageCost()" required>
-                <option value="">Select Package</option>
-                <option value="12000|12">Sitar Advanced (12 classes - ₹12,000)</option>
-                <option value="8500|10">Vocal Basic (10 classes - ₹8,500)</option>
-                <option value="4500|5">Violin Starter (5 classes - ₹4,500)</option>
-                <option value="16000|20">Tabla Intermediate (20 classes - ₹16,000)</option>
-                <option value="0|0">Other / Custom</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-2 gap-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="convertAmount">Amount Paid (INR)</label>
-              <input type="number" id="convertAmount" name="amount_paid" class="form-control" value="0" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="convertMode">Payment Mode</label>
-              <select id="convertMode" name="payment_mode" class="form-control" required>
-                <option value="UPI (PhonePe)">UPI (PhonePe)</option>
-                <option value="UPI (GPay)">UPI (GPay)</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Credit Card">Credit Card</option>
-                <option value="Cash">Cash</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="closeConvertModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary" style="background-color: #5d151c; border-color: #5d151c;">Add Student & Register Sale</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
 @endsection
 
@@ -302,52 +179,5 @@ $(document).ready(function() {
         }
     });
 });
-
-function openAddDemoModal() {
-    document.getElementById('addDemoModal').classList.add('show');
-}
-
-function closeAddDemoModal() {
-    document.getElementById('addDemoModal').classList.remove('show');
-}
-
-function handleStatusChange(selectElement, demoId) {
-    if (selectElement.value === 'convert_trigger') {
-        // Reset the select dropdown to the previous value so it doesn't stay on "convert_trigger"
-        selectElement.selectedIndex = 0; // Temporarily reset it
-        
-        // Populate modal data
-        const option = selectElement.options[selectElement.options.length - 1];
-        document.getElementById('convertName').value = option.getAttribute('data-name');
-        document.getElementById('convertEmail').value = option.getAttribute('data-email');
-        document.getElementById('convertPhone').value = option.getAttribute('data-phone');
-        document.getElementById('convertInstrument').value = option.getAttribute('data-instrument');
-        document.getElementById('convertTeacher').value = option.getAttribute('data-teacher-id');
-        
-        // Open convert modal
-        let form = document.getElementById('convertForm');
-        form.action = '/admin/demos/' + demoId + '/convert';
-        document.getElementById('convertToStudentModal').classList.add('show');
-    } else {
-        // Normal status update, submit the form
-        selectElement.form.submit();
-    }
-}
-
-function updatePackageCost() {
-    const pkg = document.getElementById('convertPackage').value;
-    if (pkg) {
-        const parts = pkg.split('|');
-        if (parts.length > 1) {
-            document.getElementById('convertAmount').value = parts[0];
-        }
-    } else {
-        document.getElementById('convertAmount').value = 0;
-    }
-}
-
-function closeConvertModal() {
-    document.getElementById('convertToStudentModal').classList.remove('show');
-}
 </script>
 @endpush

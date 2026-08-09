@@ -35,10 +35,10 @@ class ClassBookingController extends Controller
         ]);
 
         $baseStartsAt = Carbon::parse($validated['starts_at']);
-        $duration = $validated['duration_minutes'] ?? 40;
+        $duration = (int) ($validated['duration_minutes'] ?? 40);
         
         $isRecurring = ($validated['recurrence_mode'] ?? 'one-time') === 'recurring';
-        $weeksCount = $isRecurring ? ($validated['weeks_count'] ?? 1) : 1;
+        $weeksCount = (int) ($isRecurring ? ($validated['weeks_count'] ?? 1) : 1);
 
         $createdCount = 0;
         $conflictCount = 0;
@@ -55,7 +55,13 @@ class ClassBookingController extends Controller
                     ->where('ends_at', '>', $startsAt)
                     ->exists();
 
-                if ($conflict) {
+                $onLeave = \App\Models\TeacherLeave::where('teacher_id', $validated['teacher_id'])
+                    ->where('status', 'approved')
+                    ->where('from_date', '<=', $startsAt->toDateString())
+                    ->where('to_date', '>=', $startsAt->toDateString())
+                    ->exists();
+
+                if ($conflict || $onLeave) {
                     $conflictCount++;
                     continue; // Skip this occurrence
                 }
@@ -136,9 +142,19 @@ class ClassBookingController extends Controller
             ->where('starts_at', '<', $endsAt)
             ->where('ends_at', '>', $startsAt)
             ->exists();
+            
+        $onLeave = \App\Models\TeacherLeave::where('teacher_id', $booking->teacher_id)
+            ->where('status', 'approved')
+            ->where('from_date', '<=', $startsAt->toDateString())
+            ->where('to_date', '>=', $startsAt->toDateString())
+            ->exists();
 
         if ($conflict) {
             return back()->with('error', 'The selected teacher is already booked during this time slot. Please choose another time.');
+        }
+        
+        if ($onLeave) {
+            return back()->with('error', 'The selected teacher is on an approved leave on this date. Please choose another date.');
         }
 
         $booking->update([

@@ -2453,7 +2453,7 @@ initializeDatabase();
 document.addEventListener("DOMContentLoaded", () => {
   initializeSidebarState();
   setupSidebarNavigation();
-  setupRoleSwitcher();
+  // setupRoleSwitcher(); // Disabled the demo persona switcher tabs
   setupSidebarCollapsible();
   setupDropdowns();
   updateUserInfoLayout();

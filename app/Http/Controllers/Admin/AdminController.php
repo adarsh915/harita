@@ -389,7 +389,7 @@ class AdminController extends Controller
 
     public function sales(): View
     {
-        $leads      = Payment::latest()->get();
+        $leads      = Payment::with('latestDemo')->latest()->get();
         $grossSales = Payment::where('status', 'confirmed')->sum('amount');
         $enrolled   = Payment::where('status', 'confirmed')->count();
         $avgTx      = $enrolled > 0 ? round($grossSales / $enrolled) : 0;
@@ -398,7 +398,10 @@ class AdminController extends Controller
         $labels   = $months->map(fn ($m) => $m->format('M'))->values()->toArray();
         $revenue  = $months->map(fn ($m) => (int) Payment::whereYear('transaction_date', $m->year)->whereMonth('transaction_date', $m->month)->where('status', 'confirmed')->sum('amount'))->values()->toArray();
 
-        return view('admin.sales.index', compact('leads', 'grossSales', 'enrolled', 'avgTx', 'labels', 'revenue'));
+        $teachers = Teacher::with('user')->get();
+        $courses = \App\Models\Course::where('status', 'active')->get();
+
+        return view('admin.sales.index', compact('leads', 'grossSales', 'enrolled', 'avgTx', 'labels', 'revenue', 'teachers', 'courses'));
     }
 
     public function storeLead(Request $request): RedirectResponse
@@ -422,6 +425,79 @@ class AdminController extends Controller
     {
         $payment->update($request->only(['status', 'payment_mode', 'amount', 'transaction_date']));
         return back()->with('success', 'Lead updated.');
+    }
+
+    public function convertLeadToStudent(Request $request, Payment $payment): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:students,email',
+            'phone' => 'required|string',
+            'enrolled_level' => 'required|string',
+            'course_id' => 'required|exists:courses,id',
+            'teacher_id' => 'required|exists:teachers,id',
+            'credits' => 'required|integer|min:1',
+            'amount' => 'required|numeric',
+            'payment_mode' => 'required|string',
+        ]);
+
+        // Generate random password
+        $password = \Str::random(10);
+
+        // Create User account
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => \Hash::make($password),
+            'status' => 'active',
+        ]);
+
+        // Assign student role
+        $user->assignRole('student');
+
+        // Create student
+        $student = Student::create([
+            'user_id' => $user->id,
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'enrolled_level' => $data['enrolled_level'],
+            'course_id' => $data['course_id'],
+            'teacher_id' => $data['teacher_id'],
+            'credits' => $data['credits'],
+            'status' => 'active',
+            'joining_date' => today(),
+            'enrolled_format' => 'Individual',
+        ]);
+
+        // Update payment/lead to represent the conversion
+        $payment->update([
+            'amount' => $data['amount'],
+            'payment_mode' => $data['payment_mode'],
+            'status' => 'converted',
+            'transaction_date' => today(),
+        ]);
+
+        // If there's a linked demo booking, update it too
+        $demo = DemoBooking::where('payment_id', $payment->id)->first();
+        if ($demo) {
+            $demo->update([
+                'status' => 'converted',
+                'converted_student_id' => $student->id,
+            ]);
+            \Log::info("Updated demo booking #{$demo->id} status to converted for student #{$student->id}");
+        } else {
+            \Log::info("No demo booking found for payment #{$payment->id}");
+        }
+
+        // Send credentials email
+        try {
+            \Mail::to($user->email)->send(new \App\Mail\StudentCreatedMail($user, $password));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send student credentials email: ' . $e->getMessage());
+        }
+
+        return back()->with('success', "Lead successfully converted to Student! Login credentials sent to {$user->email}");
     }
 
     public function destroyLead(Payment $payment): RedirectResponse

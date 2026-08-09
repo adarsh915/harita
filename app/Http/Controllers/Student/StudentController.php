@@ -80,8 +80,18 @@ class StudentController extends Controller
             ->where('ends_at', '>', $startsAt)
             ->exists();
 
+        $onLeave = \App\Models\TeacherLeave::where('teacher_id', $request->teacher_id)
+            ->where('status', 'approved')
+            ->where('from_date', '<=', $startsAt->toDateString())
+            ->where('to_date', '>=', $startsAt->toDateString())
+            ->exists();
+
         if ($conflict) {
             return back()->withErrors(['error' => 'The selected teacher is already booked during this time slot. Please choose another time.']);
+        }
+        
+        if ($onLeave) {
+            return back()->withErrors(['error' => 'The selected teacher is on an approved leave on this date. Please choose another date.']);
         }
 
         // Deduct credit

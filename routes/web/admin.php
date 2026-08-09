@@ -44,6 +44,7 @@ Route::middleware(['auth', 'role.access:admin'])
         Route::get('/sales',               [AdminController::class, 'sales'])->name('sales');
         Route::post('/sales',              [AdminController::class, 'storeLead'])->name('sales.store');
         Route::put('/sales/{payment}',     [AdminController::class, 'updateLead'])->name('sales.update');
+        Route::post('/sales/{payment}/convert', [AdminController::class, 'convertLeadToStudent'])->name('sales.convert');
         Route::delete('/sales/{payment}',  [AdminController::class, 'destroyLead'])->name('sales.destroy');
 
         // Demos
