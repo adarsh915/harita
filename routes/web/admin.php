@@ -79,11 +79,17 @@ Route::middleware(['auth', 'role.access:admin'])
         Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
         Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
         Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
-
-        // Users
-        Route::post('/users',              [AdminController::class, 'storeUser'])->name('users.store');
-        Route::put('/users/{user}',        [AdminController::class, 'updateUser'])->name('users.update');
-        Route::delete('/users/{user}',     [AdminController::class, 'destroyUser'])->name('users.destroy');
+        Route::post('/roles/{role}/clone', [RoleController::class, 'clone'])->name('roles.clone');
+        
+        // Role Permissions API
+        Route::get('/api/roles/permissions', [RoleController::class, 'getRolePermissions'])->name('api.roles.permissions');
+        Route::post('/api/roles/permissions', [RoleController::class, 'updatePermissions'])->name('api.roles.permissions.update');
+        
+        // Users API
+        Route::get('/api/users', [RoleController::class, 'getUsers'])->name('api.users');
+        Route::post('/users', [RoleController::class, 'storeUser'])->name('users.store');
+        Route::put('/users/{user}', [RoleController::class, 'updateUser'])->name('users.update');
+        Route::delete('/users/{user}', [RoleController::class, 'destroyUser'])->name('users.destroy');
 
         // Settings
         Route::get('/settings',   [AdminController::class, 'settings'])->name('settings');

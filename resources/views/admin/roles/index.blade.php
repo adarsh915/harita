@@ -86,7 +86,7 @@
 
     .permission-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
       padding: 0.85rem 1.25rem;
       border-bottom: 1px solid var(--border-light);
       align-items: center;
@@ -231,8 +231,9 @@
           <div class="card-body p-0">
             <div class="permission-row permission-header">
               <div>Module Area</div>
-              <div class="text-center">Read</div>
-              <div class="text-center">Write</div>
+              <div class="text-center">View</div>
+              <div class="text-center">Create</div>
+              <div class="text-center">Edit</div>
               <div class="text-center">Delete</div>
               <div class="text-center">Approve</div>
             </div>
@@ -252,52 +253,61 @@
     let dtUsers = null;
 
     // Load roles permission matrix data
-    const ROLES_DATA = {
-      admin: {
-        name: "Administrator",
-        permissions: {
-          students: { read: true, write: true, delete: true, approve: true },
-          teachers: { read: true, write: true, delete: true, approve: true },
-          classes: { read: true, write: true, delete: true, approve: true },
-          finance: { read: true, write: true, delete: true, approve: true },
-          reports: { read: true, write: true, delete: true, approve: true }
-        }
-      },
-      teacher: {
-        name: "Teacher",
-        permissions: {
-          students: { read: true, write: false, delete: false, approve: false },
-          teachers: { read: true, write: false, delete: false, approve: false },
-          classes: { read: true, write: true, delete: false, approve: false },
-          finance: { read: false, write: false, delete: false, approve: false },
-          reports: { read: false, write: false, delete: false, approve: false }
-        }
-      },
-      student: {
-        name: "Student",
-        permissions: {
-          students: { read: false, write: false, delete: false, approve: false },
-          teachers: { read: true, write: false, delete: false, approve: false },
-          classes: { read: true, write: false, delete: false, approve: false },
-          finance: { read: false, write: false, delete: false, approve: false },
-          reports: { read: false, write: false, delete: false, approve: false }
-        }
-      }
-    };
-
-    let selectedRoleKey = "admin";
+    let ROLES_DATA = {};
+    let selectedRoleKey = "Admin";
 
     document.addEventListener("DOMContentLoaded", () => {
       // Setup tabs
       showTab("usersTab");
 
+      // Load roles data from backend
+      loadRolesData();
+
       // Load Users Directory Table
       loadUsersLedger();
-
-      // Setup Role matrix list items
-      renderRoleList();
-      renderPermissionsMatrix();
     });
+
+    async function loadRolesData() {
+      try {
+        // Load all roles with their permissions
+        const roles = @json($roles);
+        const allPermissions = @json($permissions); // All available permissions grouped by module
+        
+        ROLES_DATA = {};
+        roles.forEach(role => {
+          const permissions = {};
+          
+          // First, initialize ALL modules with all actions set to false
+          Object.keys(allPermissions).forEach(module => {
+            permissions[module] = { view: false, create: false, edit: false, delete: false, approve: false };
+          });
+          
+          // Then, set the permissions this role actually has to true
+          role.permissions.forEach(perm => {
+            const [module, action] = perm.name.split('.');
+            if (permissions[module]) {
+              permissions[module][action] = true;
+            }
+          });
+          
+          ROLES_DATA[role.name] = {
+            name: role.name,
+            permissions: permissions
+          };
+        });
+
+        // Set first role as selected
+        if (Object.keys(ROLES_DATA).length > 0) {
+          selectedRoleKey = Object.keys(ROLES_DATA)[0];
+        }
+
+        // Setup Role matrix list items
+        renderRoleList();
+        renderPermissionsMatrix();
+      } catch (error) {
+        console.error('Failed to load roles data:', error);
+      }
+    }
 
     function showTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
@@ -323,60 +333,57 @@
     }
 
     // --- TAB 1: USER ACCOUNTS DIRECTORY FLOW ---
-    function loadUsersLedger() {
-      const users = typeof db !== 'undefined' && typeof db.getUsers === 'function' ? db.getUsers() : [];
-      const tbody = document.getElementById("usersTableBody");
-      if (!tbody) return;
+    async function loadUsersLedger() {
+      try {
+        const response = await fetch('{{ route("admin.api.users") }}');
+        const users = await response.json();
+        
+        const tbody = document.getElementById("usersTableBody");
+        if (!tbody) return;
 
-      if (dtUsers) {
-        dtUsers.destroy();
-      }
-      tbody.innerHTML = "";
-      
-      // If db.getUsers() failed because db is not defined, let's provide dummy data so the UI doesn't look broken
-      const displayUsers = users.length > 0 ? users : [
-        {id: "USR001", name: "Ramesh Kumar", email: "ramesh@haritamusic.com", password: "password123", role: "Admin", status: "Active"},
-        {id: "USR002", name: "Sita Sharma", email: "sita@haritamusic.com", password: "password123", role: "Teacher", status: "Active"}
-      ];
+        if (dtUsers) {
+          dtUsers.destroy();
+        }
+        tbody.innerHTML = "";
 
-      displayUsers.forEach(u => {
-        const tr = document.createElement("tr");
+        users.forEach(u => {
+          const tr = document.createElement("tr");
 
-        let statusBadge = "badge-success";
-        if (u.status === "Inactive") statusBadge = "badge-danger";
+          let statusBadge = u.status === 'active' ? "badge-success" : "badge-danger";
+          let roleBadge = "badge-primary";
+          if (u.role === "Teacher") roleBadge = "badge-warning";
+          else if (u.role === "Student") roleBadge = "badge-info";
 
-        let roleBadge = "badge-primary";
-        if (u.role === "Teacher") roleBadge = "badge-warning";
-        else if (u.role === "Student") roleBadge = "badge-info";
-
-        tr.innerHTML = `
-          <td class="font-bold text-primary">${u.id}</td>
-          <td class="font-semibold">${u.name}</td>
-          <td>${u.email}</td>
-          <td>
-            <div class="pw-container">
-              <span id="pwText-${u.id}">••••••••</span>
-              <button class="btn-toggle-pw" onclick="togglePasswordDisplay('${u.id}', '${u.password}', this)" title="Show/Hide Password">👁️</button>
-            </div>
-          </td>
-          <td><span class="badge ${roleBadge}">${u.role}</span></td>
-          <td><span class="badge ${statusBadge}">${u.status}</span></td>
-          <td>
-            <div class="actions-dropdown-container">
-              <button class="actions-kebab-btn" onclick="toggleActionsDropdown(event, this)">⋮</button>
-              <div class="actions-dropdown-menu" style="min-width: 130px; right: 0; top: 100%; z-index: 50;">
-                <button class="actions-dropdown-item" onclick="editUser('${u.id}')">✏️ Edit</button>
-                <button class="actions-dropdown-item text-danger" onclick="deleteUser('${u.id}')">🗑️ Delete</button>
+          tr.innerHTML = `
+            <td class="font-bold text-primary">${u.id}</td>
+            <td class="font-semibold">${u.name}</td>
+            <td>${u.email}</td>
+            <td>
+              <div class="pw-container">
+                <span id="pwText-${u.id}">••••••••</span>
               </div>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+            </td>
+            <td><span class="badge ${roleBadge}">${u.role}</span></td>
+            <td><span class="badge ${statusBadge}">${u.status}</span></td>
+            <td>
+              <div class="actions-dropdown-container">
+                <button class="actions-kebab-btn" onclick="toggleActionsDropdown(event, this)">⋮</button>
+                <div class="actions-dropdown-menu" style="min-width: 130px; right: 0; top: 100%; z-index: 50;">
+                  <button class="actions-dropdown-item" onclick="editUser('${u.id}')">✏️ Edit</button>
+                  <button class="actions-dropdown-item text-danger" onclick="deleteUser('${u.id}')">🗑️ Delete</button>
+                </div>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
 
-      dtUsers = $('#usersTable').DataTable({
-          responsive: true
-      });
+        dtUsers = $('#usersTable').DataTable({
+            responsive: true
+        });
+      } catch (error) {
+        console.error('Failed to load users:', error);
+      }
     }
 
     function togglePasswordDisplay(userId, realPassword, btnElement) {
@@ -390,18 +397,40 @@
       }
     }
 
-    function submitSaveUser(e) {
+    async function submitSaveUser(e) {
       e.preventDefault();
       const id = document.getElementById("formUserId").value;
       const name = document.getElementById("userName").value.trim();
       const email = document.getElementById("userEmail").value.trim().toLowerCase();
       const password = document.getElementById("userPassword").value;
       const role = document.getElementById("userRole").value;
-      const status = document.getElementById("userStatus").value;
+      const status = document.getElementById("userStatus").value.toLowerCase();
       
-      alert("Mock Form Submitted! Name: " + name + " | Role: " + role);
-      
-      resetUserForm();
+      try {
+        const url = id ? `/admin/users/${id}` : '{{ route("admin.users.store") }}';
+        const method = id ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          },
+          body: JSON.stringify({ name, email, password, role, status })
+        });
+
+        if (response.ok) {
+          alert(id ? 'User updated successfully!' : 'User created successfully!');
+          resetUserForm();
+          loadUsersLedger();
+        } else {
+          const error = await response.json();
+          alert('Error: ' + (error.message || 'Failed to save user'));
+        }
+      } catch (error) {
+        console.error('Failed to save user:', error);
+        alert('Failed to save user. Please try again.');
+      }
     }
 
     function editUser(userId) {
@@ -435,7 +464,7 @@
       Object.keys(ROLES_DATA).forEach(key => {
         const role = ROLES_DATA[key];
         const btn = document.createElement("button");
-        btn.className = \`role-nav-btn \${key === selectedRoleKey ? 'active' : ''}\`;
+        btn.className = `role-nav-btn ${key === selectedRoleKey ? 'active' : ''}`;
         btn.textContent = role.name;
         btn.onclick = () => {
           selectedRoleKey = key;
@@ -456,16 +485,24 @@
 
       Object.keys(currentRole.permissions).forEach(moduleKey => {
         const actions = currentRole.permissions[moduleKey];
+        
+        // Check if module has at least one permission enabled
+        const hasAnyPermission = Object.values(actions).some(value => value === true);
+        
         const row = document.createElement("div");
         row.className = "permission-row";
+        
+        // Add visual indicator for modules with no permissions (slightly dimmed)
+        const noPermStyle = !hasAnyPermission ? 'style="opacity: 0.6;"' : '';
 
-        row.innerHTML = \`
-          <div class="font-semibold text-primary" style="text-transform: capitalize;">\${moduleKey} Manager</div>
-          <div class="text-center"><input type="checkbox" \${actions.read ? 'checked' : ''} onchange="updatePermission('\${moduleKey}', 'read', this.checked)"></div>
-          <div class="text-center"><input type="checkbox" \${actions.write ? 'checked' : ''} onchange="updatePermission('\${moduleKey}', 'write', this.checked)"></div>
-          <div class="text-center"><input type="checkbox" \${actions.delete ? 'checked' : ''} onchange="updatePermission('\${moduleKey}', 'delete', this.checked)"></div>
-          <div class="text-center"><input type="checkbox" \${actions.approve ? 'checked' : ''} onchange="updatePermission('\${moduleKey}', 'approve', this.checked)"></div>
-        \`;
+        row.innerHTML = `
+          <div class="font-semibold text-primary" style="text-transform: capitalize;" ${noPermStyle}>${moduleKey} Manager ${!hasAnyPermission ? '<span style="color: var(--text-muted); font-size: 11px; font-weight: normal;">(No Permissions)</span>' : ''}</div>
+          <div class="text-center"><input type="checkbox" ${actions.view ? 'checked' : ''} onchange="updatePermission('${moduleKey}', 'view', this.checked)"></div>
+          <div class="text-center"><input type="checkbox" ${actions.create ? 'checked' : ''} onchange="updatePermission('${moduleKey}', 'create', this.checked)"></div>
+          <div class="text-center"><input type="checkbox" ${actions.edit ? 'checked' : ''} onchange="updatePermission('${moduleKey}', 'edit', this.checked)"></div>
+          <div class="text-center"><input type="checkbox" ${actions.delete ? 'checked' : ''} onchange="updatePermission('${moduleKey}', 'delete', this.checked)"></div>
+          <div class="text-center"><input type="checkbox" ${actions.approve ? 'checked' : ''} onchange="updatePermission('${moduleKey}', 'approve', this.checked)"></div>
+        `;
 
         container.appendChild(row);
       });
@@ -473,10 +510,34 @@
 
     function updatePermission(moduleKey, actionKey, isChecked) {
       ROLES_DATA[selectedRoleKey].permissions[moduleKey][actionKey] = isChecked;
+      // Don't re-render - keep all modules visible
     }
+    
 
-    function savePermissions() {
-      alert(\`Permissions configuration scheme for "\${ROLES_DATA[selectedRoleKey].name}" role saved successfully inside the system schema!\`);
+    async function savePermissions() {
+      try {
+        const response = await fetch('{{ route("admin.api.roles.permissions.update") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          },
+          body: JSON.stringify({
+            role: selectedRoleKey,
+            permissions: ROLES_DATA[selectedRoleKey].permissions
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          alert(result.message);
+        } else {
+          alert('Error: ' + (result.message || 'Failed to save permissions'));
+        }
+      } catch (error) {
+        console.error('Failed to save permissions:', error);
+        alert('Failed to save permissions. Please try again.');
+      }
     }
   </script>
 @endpush

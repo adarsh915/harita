@@ -163,9 +163,11 @@
                   </td>
                   <td>
                     <div class="d-flex gap-1 justify-center">
+                      @can('students.edit')
                       <button class="btn btn-secondary btn-icon" title="Edit Student">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                       </button>
+                      @endcan
                     </div>
                   </td>
                 </tr>
@@ -187,6 +189,7 @@
             <div class="d-flex gap-2 flex-grow-1" style="max-width: 320px;">
               <input type="text" id="groupSearchBar" class="form-control" placeholder="Search groups...">
             </div>
+            @can('students.create')
             <button class="btn btn-primary" onclick="openAddGroupModal()">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -194,6 +197,7 @@
               </svg>
               Create Group
             </button>
+            @endcan
           </div>
         </div>
 
